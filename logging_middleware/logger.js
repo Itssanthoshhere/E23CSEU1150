@@ -4,8 +4,9 @@
  * to the Affordmed evaluation server.
  */
 
-require("dotenv").config();
-
+require("dotenv").config({
+  path: require("path").resolve(__dirname, "../.env"),
+});
 const axios = require("axios");
 const { getToken } = require("./auth");
 
@@ -28,15 +29,12 @@ async function Log(stack, level, pkg, message) {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return response.data;
   } catch (error) {
-    console.error(
-      "Logging Error:",
-      error.response?.data || error.message
-    );
+    console.error("Logging Error:", error.response?.data || error.message);
 
     return null;
   }
