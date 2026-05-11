@@ -53,14 +53,14 @@ Below is the output from the Node.js ranking service showing the prioritized res
 The dashboard allows for easy navigation between the full feed and the smart priority inbox.
 
 **Main Feed (Desktop)**
-![Dashboard Feed](notification_app_fe/screenshots/fe_all_desktop.png)
+![Dashboard Feed](notification_app_fe/screenshots/final_all_desktop.png)
 
 **Smart Inbox (Desktop)**
-![Priority Inbox](notification_app_fe/screenshots/fe_priority_desktop.png)
+![Priority Inbox](notification_app_fe/screenshots/final_priority_desktop.png)
 
 **Mobile View**
 The app scales beautifully down to mobile devices, ensuring students can check updates on the go.
-![Mobile All Feed](notification_app_fe/screenshots/fe_all_mobile.png)
+![Mobile All Feed](notification_app_fe/screenshots/final_priority_mobile.png)
 
 ---
 
