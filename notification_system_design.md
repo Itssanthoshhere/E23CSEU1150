@@ -1,195 +1,68 @@
-# Stage 1 — Priority Inbox
+# Campus Notifications System — Project Documentation
 
-## Overview
-
-Students receive a large number of campus notifications every day related to placements, results, workshops, events, hackathons, and other activities. Because of this, important notifications are often missed.
-
-The objective of this task is to build a **Priority Inbox System** that filters and displays the most important notifications first.
-
-The system prioritizes notifications based on:
-
-- Notification type
-- Notification recency
-
-Only the top `N` notifications are returned to the user.
+## Project Context
+I was tasked with building a notification platform for students to track placements, academic results, and campus events. The primary challenge was the high volume of notifications, which often led to students missing critical updates. To solve this, I implemented a two-stage solution: a robust ranking backend and a modern React frontend.
 
 ---
 
-# Priority Strategy
+# Phase 1: Smart Ranking Logic
 
-The ranking system uses two factors:
+For the first phase, I focused on the core logic for the "Priority Inbox." The idea was to create a scoring system that naturally surfaces the most important items.
 
-## 1. Notification Type Weight
+### My Ranking Strategy
+The algorithm uses a composite score based on two variables:
 
-Each notification type is assigned a fixed priority weight.
+1.  **Category Importance**: I assigned weights based on the impact of the notification. Placements (3) are the most critical, followed by Results (2), and finally general Events (1).
+2.  **Time Decay (Recency)**: Even a high-priority placement item should eventually yield to a brand-new result. I used a simple decay formula: `1 / (1 + age_in_seconds)`.
 
-| Type      | Weight |
-| --------- | ------ |
-| Placement | 3      |
-| Result    | 2      |
-| Event     | 1      |
+**Final Score Calculation:**
+`Score = CategoryWeight + (1 / (1 + ageInSeconds))`
 
-This creates the following priority order:
+This ensures that the category always dictates the primary sort order, while recency acts as the "tie-breaker" within that category.
 
-```text id="v7j7vf"
-Placement > Result > Event
-```
-
-Placement notifications always rank above Result and Event notifications.
-
----
-
-## 2. Recency Score
-
-For notifications of the same type, newer notifications should appear first.
-
-The recency score is calculated using:
-
-```text id="t9r4g4"
-recencyScore = 1 / (1 + ageInSeconds)
-```
-
-Where:
-
-- `ageInSeconds` is the difference between current time and notification timestamp
-- Newer notifications receive a higher score
-- Older notifications gradually lose importance
+### Technical Implementation (Backend)
+I wrote a lightweight Node.js service that:
+- Fetches raw data from the evaluation API.
+- Computes scores for every notification in real-time.
+- Sorts the entire pool and extracts the top `N` requested by the product manager.
 
 ---
 
-# Final Priority Score
+# Phase 2: React Frontend & UI Experience
 
-The final score is calculated as:
+With the logic working, I moved on to building the user interface. I used **React (Vite)** and **Material UI** to create a responsive, premium-feeling dashboard.
 
-```text id="ng1q1s"
-priorityScore = typeWeight + recencyScore
-```
+### Key UI Decisions
+- **Visual Hierarchy**: I used a custom dark theme with high contrast for unread items. Once a user clicks a notification, I persist that "viewed" state in LocalStorage and dim the item slightly to keep the focus on what's new.
+- **Filtering**: On the main feed, I added server-side filtering so students can quickly drill down into just results or just placements.
+- **The Priority View**: I implemented a dedicated view for the Priority Inbox where users can adjust the "N" value (Top 5, 10, 20, etc.) via an interactive slider.
 
-This ensures:
-
-- Notification type remains the main priority factor
-- Recency helps rank notifications within the same category
-
----
-
-# Algorithm
-
-## Steps
-
-1. Fetch notifications from the API
-2. Calculate priority score for each notification
-3. Sort notifications in descending order
-4. Return top `N` notifications
+### Overcoming Technical Hurdles
+- **CORS Challenges**: I encountered CORS issues when calling the external API directly from the browser. To fix this without compromising security, I set up a local development proxy in Vite.
+- **Authentication**: I implemented a robust axios interceptor system that automatically handles token acquisition and refreshes, ensuring the user never sees a "401 Unauthorized" error.
 
 ---
 
-## Pseudocode
+# Output Verification
 
-```text id="0dfp5d"
-function getTopNotifications(notifications, n):
+### Backend Service Output
+Below is the output from the Node.js ranking service showing the prioritized results.
+![Service Ranking Output](notification_app_be/screenshots/priority_inbox_output.png)
 
-    for each notification:
-        calculate ageInSeconds
-        calculate recencyScore
-        priorityScore = typeWeight + recencyScore
+### Frontend Dashboard
+The dashboard allows for easy navigation between the full feed and the smart priority inbox.
 
-    sort notifications by priorityScore descending
+**Main Feed (Desktop)**
+![Dashboard Feed](notification_app_fe/screenshots/fe_all_desktop.png)
 
-    return first n notifications
-```
+**Smart Inbox (Desktop)**
+![Priority Inbox](notification_app_fe/screenshots/fe_priority_desktop.png)
 
----
-
-# Complexity Analysis
-
-| Operation         | Complexity |
-| ----------------- | ---------- |
-| Score Calculation | O(k)       |
-| Sorting           | O(k log k) |
-| Top N Extraction  | O(n)       |
-
-Overall:
-
-```text id="0klc4w"
-Time Complexity  : O(k log k)
-Space Complexity : O(k)
-```
-
-Where `k` is the total number of notifications.
+**Mobile View**
+The app scales beautifully down to mobile devices, ensuring students can check updates on the go.
+![Mobile All Feed](notification_app_fe/screenshots/fe_all_mobile.png)
 
 ---
 
-# Handling New Notifications
-
-Notifications are continuously added to the system. To keep the inbox updated:
-
-1. Notifications are fetched from the API periodically
-2. Scores are recalculated each time
-3. Notifications are sorted again
-4. Top notifications are returned
-
-This approach ensures that:
-
-- Recent notifications move upward automatically
-- Older notifications slowly move downward
-- The inbox remains updated in real time
-
----
-
-# Why This Approach?
-
-## Why not sort only by timestamp?
-
-Sorting only by timestamp could place less important event notifications above placement notifications.
-
-Using priority weights ensures important notifications always appear first.
-
----
-
-## Why not use database queries?
-
-The task requirements specify that processing should happen in application logic after fetching notifications from the API.
-
-Therefore, all scoring and sorting operations are performed in-memory.
-
----
-
-# Technologies Used
-
-- Node.js
-- JavaScript
-- Axios
-- Logging Middleware
-- Bearer Token Authentication
-
----
-
-
-# Screenshots
-
-## Terminal Output
-
-![Priority Inbox Output](notification_app_be/screenshots/priority_inbox_output.png)
-
----
-
-## JSON Output
-
-
-![JSON Response](notification_app_be/screenshots/priority_inbox_json.png)
-
-
----
-
-# Conclusion
-
-The Priority Inbox system ranks campus notifications using notification type and recency. The implementation is simple, efficient, and easy to maintain.
-
-The system:
-
-1. Fetches notifications from the API
-2. Calculates a priority score for each notification
-3. Sorts notifications based on score
-4. Returns the top `N` notifications
-
-The design can also be extended in the future to support additional notification types, personalized ranking, and real-time updates.
+# Final Conclusion
+The project successfully bridges the gap between raw data and student needs. By combining a weighted ranking algorithm with a clean, responsive UI, we've created a tool that ensures critical campus updates are never missed.
